@@ -1,0 +1,99 @@
+---
+title: "HW_3"
+author: "Arielle"
+date: "10/10/2019"
+output: html_document
+---
+
+### First loading in the tidyverse and viridis library into my markdown page 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library (tidyverse)
+library (viridis)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+###Problem 1
+####* First I am loading the instacart dataset into r using the library datasets
+```{r}
+library(p8105.datasets)
+data("instacart")
+ view (instacart)
+```
+####The instacart data set has 1,384,617 obervations and 15 variabeles. The dataset includes the orderid and the product id as well as how many items are in the cart. The dataset also has information on whether or not the product was re-ordered previously or not, it also has information on the order number, the hour of the day the product was ordered and the name of the product. The aisleid and number as well as the deparment are also included in the dataset. 
+
+####* How many aisles are there, and which aisles are the most items ordered from?
+
+```{r}
+instacart %>% 
+  count(aisle) %>% 
+  arrange(desc(n))
+```
+##### There are 134 aisles and the aisles with he most ordered items are from the fresh vegetables and fresh fruits. 
+
+####* Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+
+```{r}
+instacart %>% 
+  count (aisle) %>% 
+  filter ( n > 10000) %>% 
+  ggplot(aes(x = reorder(aisle,n), y=n)) +
+  geom_bar (stat = "identity") + coord_flip() +
+  labs(
+    title = "Number of items ordered by Item",
+    x = "Aisle",
+    y = "Number of Items"
+  )
+```
+##### Provided a graph that showed the number of items ordered by item. 
+
+####*Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+
+```{r}
+instacart %>% 
+  filter (aisle == c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>%
+  group_by (aisle, product_name) %>% 
+  summarize(n = n()) %>% 
+  filter (min_rank(desc(n)) < 4) %>% 
+  knitr::kable (col.names = c("Aisle Name",
+                              "Product Name",
+                              "Item Count"))
+```
+
+####Created a table that had the top three items in baking ingredients, dog food care and packages vegetables fruits in a nice table. 
+
+####* Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+
+```{r}
+instacart %>% 
+  filter (product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize (mean=mean(order_hour_of_day)) %>% 
+  pivot_wider(
+    names_from = "order_dow",
+    values_from = "mean") %>% 
+  knitr::kable(col.names= c("Product Name",
+                            "Sunday",
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday"))
+```
+
