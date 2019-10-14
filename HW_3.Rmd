@@ -2,7 +2,7 @@
 title: "HW_3"
 author: "Arielle"
 date: "10/10/2019"
-output: html_document
+output: github_document
 ---
 
 ### First loading in the tidyverse and viridis library into my markdown page 
@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library (tidyverse)
 library (viridis)
+library (gridExtra)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -35,7 +36,23 @@ library(p8105.datasets)
 data("instacart")
  view (instacart)
 ```
-####The instacart data set has 1,384,617 obervations and 15 variabeles. The dataset includes the orderid and the product id as well as how many items are in the cart. The dataset also has information on whether or not the product was re-ordered previously or not, it also has information on the order number, the hour of the day the product was ordered and the name of the product. The aisleid and number as well as the deparment are also included in the dataset. 
+
+The instacart data set has 1,384,617 obervations and 15 variabeles. The dataset includes the orderid and the product id as well as how many items are in the cart. The dataset also has information on whether or not the product was re-ordered previously or not, it also has information on the order number, the hour of the day the product was ordered and the name of the product. The aisleid and number as well as the deparment are also included in the dataset. Some of the key variables in the data set can be found below:
+    order_id: order identifier
+    product_id: product identifier
+    add_to_cart_order: order in which each product was added to cart
+    reordered: 1 if this prodcut has been ordered by this user in the past, 0 otherwise
+    user_id: customer identifier
+    eval_set: which evaluation set this order belongs in (Note that     the data for use in this class is exclusively from the “train” eval_set)
+    order_number: the order sequence number for this user (1=first, n=nth)
+    order_dow: the day of the week on which the order was placed
+    order_hour_of_day: the hour of the day on which the order was placed
+    days_since_prior_order: days since the last order, capped at 30, NA if order_number=1
+    product_name: name of the product
+    aisle_id: aisle identifier
+    department_id: department identifier
+    aisle: the name of the aisle
+    department: the name of the department
 
 ####* How many aisles are there, and which aisles are the most items ordered from?
 
@@ -44,7 +61,8 @@ instacart %>%
   count(aisle) %>% 
   arrange(desc(n))
 ```
-##### There are 134 aisles and the aisles with he most ordered items are from the fresh vegetables and fresh fruits. 
+
+There are 134 aisles and the aisles with he most ordered items are from the fresh vegetables and fresh fruits. 
 
 ####* Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
@@ -60,7 +78,8 @@ instacart %>%
     y = "Number of Items"
   )
 ```
-##### Provided a graph that showed the number of items ordered by item. 
+
+Provided a graph that showed the number of items ordered by item. 
 
 ####*Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
 
@@ -75,7 +94,7 @@ instacart %>%
                               "Item Count"))
 ```
 
-####Created a table that had the top three items in baking ingredients, dog food care and packages vegetables fruits in a nice table. 
+Created a table that had the top three items in baking ingredients, dog food care and packages vegetables fruits in a nice table. 
 
 ####* Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
 
@@ -97,3 +116,133 @@ instacart %>%
                             "Saturday"))
 ```
 
+## Problem 2 
+#### Loaded the BRFSS data into R using the class library name. 
+
+```{r}
+library(p8105.datasets)
+data ("brfss_smart2010")
+view (brfss_smart2010)
+```
+#### Cleaning the BRFSS data set. 
+
+
+```{r}
+brfss=
+  brfss_smart2010 %>% 
+ filter(Response %in% c("Excellent","Very good", "Good","Fair","Poor"))%>%
+  mutate (Response = ordered(Response, c("Poor","Fair", "Good","Very good","Excellent")))
+```
+#### Cleaned the data set by focusing only on Overall Health as well as ordereing the data from Poor tp Excellent. 
+
+####* In 2002, which states were observed at 7 or more locations?
+```{r}
+brfss %>% 
+  filter (Year =="2002") %>% 
+  group_by (Year,Locationabbr) %>% 
+  summarize (n=n()) %>% 
+  filter ( n> 6) %>% 
+  knitr::kable (col.names = c("Year",
+                              "State_Location",
+                              "N"))
+```
+
+The code above shows the states were observed at 7 or more locations in 2002. The table list out all the states that have more than 6 observations in it, 36 out of 50 states had more than 7 observation.
+
+####* In 2010, which states were observed at 7 or more locations?
+
+```{r}
+brfss %>% 
+  filter (Year =="2010") %>% 
+  group_by (Year,Locationabbr) %>% 
+  summarize (n=n()) %>% 
+  filter ( n> 6) %>% 
+  knitr::kable (col.names = c("Year",
+                              "State_Location",
+                              "N"))
+```
+
+The code above shows the states were observed at 7 or more locations in 2010. The table list out all the states that have more than 6 observations in it, 45 out of 50 states had more than 7 observation.
+
+####*Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+
+```{r}
+new_brfss=
+  brfss %>% 
+  filter (Response == "Excellent") %>% 
+  group_by (Locationabbr,Year) %>% 
+  summarize (mean= mean(Data_value)) 
+
+new_brfss %>% 
+ggplot (aes(x = Year, y = mean)) + geom_line(aes(group = Locationabbr, color = Locationabbr)) + labs(
+  title= "The Mean Data_Values for Excellent Responses",
+  x = "Year",
+  y = "Mean")
+```
+
+Created a new dataset that focused only on the Excellent Responses in the BRFSS dataset.Created a varaible that represented the mean. The code for the ggplot that showd the mean distriburtion for each state that had Excellent Response is also present in the chunk.
+
+
+####* Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State
+
+```{r}
+brfss %>% 
+  filter (Year %in% c("2006", "2010"), Locationabbr == "NY") %>% 
+  filter(Response %in% c("Excellent","Very good", "Good","Fair","Poor"))%>%
+  mutate (Response = ordered(Response, c("Poor","Fair", "Good","Very good","Excellent"))) %>% 
+    ggplot (aes(x = Response, y = Data_value)) + geom_violin(aes( color= Response)) + stat_summary(fun.y= median, geom = "point", color = "red") +labs(
+    title = "Distribution of Data Values for Responses in NY 2006 and 2010",
+    x = "Response",
+    y = "Data_value") +
+  facet_grid(~Year)
+```
+
+ The two plots show the distribution of Data values for responnses in NY in 2006 and 2010. The red point shows the median value for each response category in the the violin plot. 
+
+
+##Problem 3
+
+```{r}
+accel =
+  read_csv(file="./data/accel_data.csv") %>% 
+  janitor::clean_names () %>% 
+  mutate(
+    week_type = if_else(day %in% c("Saturday","Sunday"), "Weekend", "Weekday")) %>% 
+  pivot_longer(
+    activity_1:activity_1440,
+    names_to = "Minute",
+    names_prefix = "activity_",
+    values_to = "Activity") %>% 
+  mutate(week= as.integer(week),
+         day= as.character(day),
+         day_id = as.integer(day_id),
+         week_type = as.character(week_type),
+         Activity = as.numeric(Activity),
+         Minute = as.numeric(Minute))
+```
+
+####* Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+```{r}
+accel %>% 
+  group_by (week, day) %>% 
+  summarize (total_activity = sum(Activity)) %>% 
+  knitr::kable (col.names = c("Week", "Day", "Total_Activity"))
+```
+
+The apparent trends that I notice in the table are that there are 5 weeks in the table. The weeks begin from Friday to Wednesday. There are no other apparent trends on the table. There are some days were activity is high and there are other days where the activity is low. There are two saturdays where the the activity was only 1440.00 these are the lowest points that are present on the table. Most of the activity was around 40,000 and 50,000. 
+
+####* Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+
+```{r}
+accel %>% 
+  mutate (Total_hour= Minute %/% 60) %>% 
+  group_by(day, Total_hour) %>% 
+  summarize (Total_activity = sum(Activity)) %>%
+  ggplot (aes(x = Total_hour, y = Total_activity)) + geom_line (aes(color= day)) +labs(
+    title = "24 Hour Activity ",
+    x = "Time in Hours",
+    y = "Total_Activity") 
+```
+
+Some of the patterns seen in the graph are in the first 5 to 6 hours of the day there is low activity, this then increases a little between hours 5-10. There is a decrease in activity between hour 10- 15 and that stays at a constant rate to about hour 20. There tends to be a spike in activity at=round hour 20 and activity goes back down between hour 20-24. Fridays and Thursday tend to be the most active days with the highest peaks in activity and Saturday tends to be the lowest day of activity. 
